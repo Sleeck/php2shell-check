@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Vérifie à distance le chemin OOM de CVE-2026-109618.
+"""Sonde à distance une erreur OOM lors du traitement d'un POST multipart.
 
 Envoie une seule fois le POST multipart qui a déclenché un OOM dans un lab
 PHP 8.2.34. La requête contient 1 015 contrôles de fichier vides avec des noms
-imbriqués sur 62 niveaux. Elle peut épuiser la mémoire d'un worker PHP
-vulnérable. À utiliser uniquement sur un serveur autorisé.
+imbriqués sur 62 niveaux. Elle peut épuiser la mémoire d'un worker PHP, même
+corrigé. À utiliser uniquement sur un serveur autorisé.
 
-Le résultat prouve au mieux que ce chemin OOM est accessible. Il ne démontre
-pas une exécution de code, ni CVE-2026-109619. Un résultat sans OOM ne prouve
-pas que le serveur est corrigé : un WAF ou une configuration peut le masquer.
+Un OOM prouve seulement que cette requête a épuisé la mémoire du worker. Il ne
+prouve ni corruption mémoire, ni exécution de code, ni exploitabilité de
+CVE-2026-109618 ou CVE-2026-109619. Un résultat sans OOM ne prouve pas que le
+serveur est corrigé : un WAF ou une configuration peut le masquer.
 """
 
 import argparse
@@ -143,8 +144,8 @@ def main() -> int:
     show("POST de contrôle", answer)
 
     if OOM_PATTERN.search(answer.body):
-        print("OOM PHP OBSERVÉ : le chemin d'épuisement mémoire est accessible à distance.")
-        print("Cela ne démontre ni exécution de code, ni CVE-2026-109619.")
+        print("OOM PHP OBSERVÉ : cette requête a épuisé la mémoire du worker.")
+        print("Ce signal n'établit ni version vulnérable, ni corruption mémoire, ni exécution de code.")
         return 1
     if answer.status in args.block_status:
         print("REJET DIFFÉRENTIEL : la charge a été bloquée ; confirmer l'action dans les journaux du WAF.")
