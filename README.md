@@ -1,11 +1,34 @@
 # php2shell-check
 
-Sonde distante d'épuisement mémoire multipart inspirée d'une stratégie décrite
+`check_php2shell_oom.py` est une sonde distante d'épuisement mémoire multipart
+inspirée d'une stratégie décrite
 pour CVE-2026-109618. Une erreur mémoire ne prouve pas que cette CVE est
 exploitable, ni même que la version de PHP est vulnérable.
 Le script envoie un GET témoin puis un seul POST multipart vers l'URL indiquée.
 Ce POST peut épuiser la mémoire d'un worker PHP, même corrigé : utilisez-le uniquement
 sur une cible que vous êtes autorisé à tester.
+
+## Exploit en laboratoire
+
+`exploit/exploit.py` exécute la chaîne complète : fuite de la base du tas,
+fuite de la base de `libphp.so`, puis exécution d'une commande système. La copie
+présente ici a été vérifiée sur `php:8.4.26-apache` dans un conteneur isolé :
+la commande `id` y a renvoyé `uid=33(www-data)`. Le témoin `php:8.4.27-apache`
+n'a pas produit de fuite. Ce résultat dépend de la version, de la compilation
+et de la configuration PHP ; il ne démontre pas l'exploitabilité d'une autre URL.
+
+Sur un hôte Linux `amd64` avec Docker Compose et Python 3.9+ :
+
+```bash
+docker compose -f exploit/docker/docker-compose.yml up -d
+python3 exploit/exploit.py -u http://127.0.0.1:8088/index.php -c 'id>/out/p1' --proof-file exploit/out/p1
+docker compose -f exploit/docker/docker-compose.yml down
+```
+
+Le conteneur écoute seulement sur `127.0.0.1:8088`. Le répertoire `exploit/out`
+reçoit la preuve et les offsets extraits de l'image PHP. Le script et son
+environnement sont dans `exploit/` ; leur notice de licence est dans
+`exploit/LICENSE`.
 
 ## Exemple
 

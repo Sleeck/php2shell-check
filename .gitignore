@@ -1,2 +1,4 @@
 __pycache__/
 *.py[cod]
+exploit/out/*
+!exploit/out/.gitkeep
